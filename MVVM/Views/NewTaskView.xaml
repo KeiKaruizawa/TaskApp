@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TaskApp.MVVM.Views.NewTaskView"
              xmlns:converters="clr-namespace:TaskApp.Converters"
-             Title="Add New Task"
              BackgroundColor="White">
 
     <ContentPage.Resources>
@@ -41,27 +40,48 @@
                Margin="0,30,0,12" />
 
         <!-- Categories List -->
-        <CollectionView Grid.Row="2"
-                       ItemsSource="{Binding Categories}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Padding="0,8">
-                        <HorizontalStackLayout Spacing="16">
-                            <Ellipse Fill="{Binding Color, Converter={StaticResource ColorConverter}}"
-                                    WidthRequest="32"
-                                    HeightRequest="32"
-                                    VerticalOptions="Center" />
-                            <RadioButton Content="{Binding CategoryName}"
-                                        FontSize="18"
-                                        TextColor="#333333"
-                                        GroupName="Category"
-                                        IsChecked="{Binding IsSelected}"
-                                        VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout>
+                <CollectionView ItemsSource="{Binding Categories}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="0,8">
+                                <HorizontalStackLayout Spacing="16">
+                                    <Ellipse Fill="{Binding Color, Converter={StaticResource ColorConverter}}"
+                                            WidthRequest="32"
+                                            HeightRequest="32"
+                                            VerticalOptions="Center" />
+                                    <RadioButton Content="{Binding CategoryName}"
+                                                FontSize="18"
+                                                TextColor="#333333"
+                                                GroupName="Category"
+                                                IsChecked="{Binding IsSelected}"
+                                                VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Add New Category Button -->
+                <Grid Padding="0,8">
+                    <HorizontalStackLayout Spacing="16">
+                        <Ellipse Fill="#E0E0E0"
+                                WidthRequest="32"
+                                HeightRequest="32"
+                                VerticalOptions="Center" />
+                        <Label Text="Add New Category"
+                               FontSize="18"
+                               TextColor="#999999"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="AddCategoryClicked" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
 
         <!-- Add Button -->
         <Button Grid.Row="3"
