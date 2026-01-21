@@ -6,4 +6,14 @@ public partial class NewTaskView : ContentPage
 	{
 		InitializeComponent();
 	}
+
+	private void AddTaskClicked(object sender, EventArgs e)
+	{
+
+	}
+
+	private void AddCategoryClicked(object sender, EventArgs e)
+	{
+
+	}
 }

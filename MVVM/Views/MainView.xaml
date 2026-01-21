@@ -3,68 +3,128 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TaskApp.MVVM.Views.MainView"
              xmlns:converters="clr-namespace:TaskApp.Converters"
-             Title="Tasker">
-    
+             Title="Tasker"
+             BackgroundColor="White">
+
     <ContentPage.Resources>
-        <converters:ColorConverter x:Key="ColorConverter" />
+        <ResourceDictionary>
+
+            <converters:ColorConverter x:Key="ColorConverter" />
+
+            <!-- Circular + Button -->
+            <Style x:Key="CircularButton" TargetType="Button">
+                <Setter Property="WidthRequest" Value="56" />
+                <Setter Property="HeightRequest" Value="56" />
+                <Setter Property="CornerRadius" Value="28" />
+                <Setter Property="FontSize" Value="32" />
+                <Setter Property="BackgroundColor" Value="#6B6B6B" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="HorizontalOptions" Value="End" />
+                <Setter Property="VerticalOptions" Value="End" />
+                <Setter Property="Margin" Value="0,0,20,20" />
+            </Style>
+
+        </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid Margin="15" RowDefinitions=".1*,.3*,.7*">
-        <Label StyleClass="DarkBlue, Header" Text="My Tasks" />
-        <Grid Grid.Row="1" RowDefinitions=".2*, .8*">
-            <Label StyleClass="LightBlue, SubHeader" Text="CATEGORIES" />
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Categories}">
-                <CollectionView.ItemsLayout>
-                    <LinearItemsLayout ItemSpacing="5" Orientation="Horizontal" />
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="10">
-                            <RoundRectangle />
-                            <VerticalStackLayout Padding="15" Spacing="10">
-                                <Label StyleClass="LightBlue" Text="{Binding PendingTasks, StringFormat='{0} Tasks'}" />
-                                <Label StyleClass="DarkBlue,CardTitle" Text="{Binding CategoryName}" />
-                                <ProgressBar Progress="{Binding Percentage}" ProgressColor="{Binding Color, Converter={StaticResource ColorConverter}}" />
-                            </VerticalStackLayout>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
-        <Grid Grid.Row="2" RowDefinitions=".2*, .8*">
-            <Label StyleClass="LightBlue,SubHeader" Text="PENDING TASKS" />
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Tasks}"
-                        ItemsUpdatingScrollMode="KeepLastItemInView">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame BorderColor="Transparent">
-                            <HorizontalStackLayout>
-                                <CheckBox
-                                x:Name="checkBox"
-                                CheckedChanged="checkBox_CheckedChanged"
-                                IsChecked="{Binding Completed}"
-                                VerticalOptions="Center"
-                                Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
-                                <Label Text="{Binding TaskName}" VerticalOptions="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger
-                                        Binding="{Binding Source={x:Reference checkBox}, Path=IsChecked}"
-                                        TargetType="Label"
-                                        Value="True">
-                                            <Setter Property="TextDecorations" Value="Strikethrough" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </HorizontalStackLayout>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
-        <Button
-        Grid.Row="2"
-        Clicked="Button_Clicked"
-        Style="{StaticResource CircularButton}"
-        Text="+" />
+    <Grid Margin="20,10,20,0" RowDefinitions="Auto,Auto,*">
+
+        <!-- Categories Section -->
+        <VerticalStackLayout Grid.Row="0" Spacing="12">
+            <Label Text="Categories" 
+                   FontSize="16" 
+                   TextColor="#999999"
+                   Margin="0,10,0,0" />
+
+            <Grid ColumnDefinitions="*,*" 
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="12"
+                  RowSpacing="12">
+
+                <CollectionView ItemsSource="{Binding Categories}"
+                               Grid.ColumnSpan="2"
+                               Grid.RowSpan="2">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                       Span="2"
+                                       HorizontalItemSpacing="12"
+                                       VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="16" 
+                                  BackgroundColor="{Binding Color, Converter={StaticResource ColorConverter}}"
+                                  HeightRequest="100">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer />
+                                </Grid.GestureRecognizers>
+                                <RoundRectangle CornerRadius="12" 
+                                              Fill="{Binding Color, Converter={StaticResource ColorConverter}}" />
+                                <VerticalStackLayout Spacing="8" VerticalOptions="Center">
+                                    <Label Text="{Binding PendingTasks}" 
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="#333333" />
+                                    <Label Text="{Binding CategoryName}" 
+                                           FontSize="16"
+                                           TextColor="#333333" />
+                                    <BoxView HeightRequest="3" 
+                                            WidthRequest="40"
+                                            HorizontalOptions="Start"
+                                            Color="Red"
+                                            IsVisible="{Binding Percentage, Converter={StaticResource ColorConverter}}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Pending Tasks Section -->
+        <VerticalStackLayout Grid.Row="1" Spacing="12" Margin="0,30,0,0">
+            <Label Text="Pending Tasks" 
+                   FontSize="16" 
+                   TextColor="#999999" />
+        </VerticalStackLayout>
+
+        <!-- Tasks List -->
+        <CollectionView Grid.Row="2" 
+                       ItemsSource="{Binding Tasks}"
+                       Margin="0,12,0,0"
+                       ItemsUpdatingScrollMode="KeepLastItemInView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="0,8">
+                        <HorizontalStackLayout Spacing="12">
+                            <CheckBox x:Name="checkBox"
+                                    CheckedChanged="checkBox_CheckedChanged"
+                                    IsChecked="{Binding Completed}"
+                                    VerticalOptions="Center"
+                                    Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
+                            <Label Text="{Binding TaskName}" 
+                                   FontSize="16"
+                                   TextColor="#333333"
+                                   VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger Binding="{Binding Source={x:Reference checkBox}, Path=IsChecked}"
+                                               TargetType="Label"
+                                               Value="True">
+                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                        <Setter Property="TextColor" Value="#999999" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Add Button -->
+        <Button Grid.Row="2"
+                Clicked="Button_Clicked"
+                Style="{StaticResource CircularButton}"
+                Text="+" />
     </Grid>
 </ContentPage>

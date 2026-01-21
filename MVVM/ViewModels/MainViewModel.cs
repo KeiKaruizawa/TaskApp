@@ -29,72 +29,84 @@ namespace TaskApp.MVVM.ViewModels
         private void FillData()
         {
             Categories = new ObservableCollection<Category>
-               {
-                    new Category
-                    {
-                         Id = 1,
-                         CategoryName = ".NET MAUI Course",
-                         Color = "#CF14DF"
-                    },
-                    new Category
-                    {
-                         Id = 2,
-                         CategoryName = "Tutorials",
-                         Color = "#df6f14"
-                    },
-                    new Category
-                    {
-                         Id = 3,
-                         CategoryName = "Shopping",
-                         Color = "#14df80"
-                    }
-               };
+            {
+                new Category
+                {
+                    Id = 1,
+                    CategoryName = "Assignment",
+                    Color = "#B3D9FF" // Pastel Blue
+                },
+                new Category
+                {
+                    Id = 2,
+                    CategoryName = "Quiz",
+                    Color = "#E6D9FF" // Pastel Purple
+                },
+                new Category
+                {
+                    Id = 3,
+                    CategoryName = "Personal",
+                    Color = "#FFD9D9" // Pastel Peach/Pink
+                },
+                new Category
+                {
+                    Id = 4,
+                    CategoryName = "Health",
+                    Color = "#D9F2E6" // Pastel Green
+                }
+            };
 
             Tasks = new ObservableCollection<MyTask>
-               {
-                    new MyTask
-                    {
-                         TaskName = "Upload exercise files",
-                         Completed = false,
-                         CategoryId = 1
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Plan next course",
-                         Completed = false,
-                         CategoryId = 1
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Upload new ASP.NET video on YouTube",
-                         Completed = false,
-                         CategoryId = 2
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Fix Settings.cs class of the project",
-                         Completed = false,
-                         CategoryId = 2
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Update github repository",
-                         Completed = true,
-                         CategoryId = 2
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Buy eggs",
-                         Completed = false,
-                         CategoryId = 3
-                    },
-                    new MyTask
-                    {
-                         TaskName = "Go for the pepperoni pizza",
-                         Completed = false,
-                         CategoryId = 3
-                    },
-               };
+            {
+                new MyTask
+                {
+                    TaskName = "ITPRA - Application Letter",
+                    Completed = false,
+                    CategoryId = 1
+                },
+                new MyTask
+                {
+                    TaskName = "Capstone - Write RRS",
+                    Completed = false,
+                    CategoryId = 1
+                },
+                new MyTask
+                {
+                    TaskName = "PROEL3 - online quiz (Monday)",
+                    Completed = false,
+                    CategoryId = 2
+                },
+                new MyTask
+                {
+                    TaskName = "SOCPRO - short quiz (Tuesday)",
+                    Completed = false,
+                    CategoryId = 2
+                },
+                new MyTask
+                {
+                    TaskName = "Do laundry",
+                    Completed = true,
+                    CategoryId = 3
+                },
+                new MyTask
+                {
+                    TaskName = "Organize files and folders",
+                    Completed = false,
+                    CategoryId = 3
+                },
+                new MyTask
+                {
+                    TaskName = "Track expenses",
+                    Completed = false,
+                    CategoryId = 3
+                },
+                new MyTask
+                {
+                    TaskName = "Stretch after long screen time",
+                    Completed = false,
+                    CategoryId = 4
+                }
+            };
 
             UpdateData();
         }
@@ -115,11 +127,10 @@ namespace TaskApp.MVVM.ViewModels
                                    where t.Completed == false
                                    select t;
 
-
-
                 c.PendingTasks = notCompleted.Count();
                 c.Percentage = (float)completed.Count() / (float)tasks.Count();
             }
+
             foreach (var t in Tasks)
             {
                 var catColor =
@@ -129,6 +140,5 @@ namespace TaskApp.MVVM.ViewModels
                 t.TaskColor = catColor;
             }
         }
-
     }
 }
