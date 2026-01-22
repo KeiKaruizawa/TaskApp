@@ -3,20 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TaskApp.MVVM.Views.MainView"
              xmlns:converters="clr-namespace:TaskApp.Converters"
-             Title="Tasker"
-             BackgroundColor="White">
+             BackgroundColor="White"
+             Shell.NavBarIsVisible="False">
 
     <ContentPage.Resources>
         <ResourceDictionary>
 
             <converters:ColorConverter x:Key="ColorConverter" />
+            <converters:ProgressColorConverter x:Key="ProgressColorConverter" />
 
             <!-- Circular + Button -->
             <Style x:Key="CircularButton" TargetType="Button">
                 <Setter Property="WidthRequest" Value="56" />
                 <Setter Property="HeightRequest" Value="56" />
                 <Setter Property="CornerRadius" Value="28" />
-                <Setter Property="FontSize" Value="32" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="Padding" Value="0" />
                 <Setter Property="BackgroundColor" Value="#6B6B6B" />
                 <Setter Property="TextColor" Value="White" />
                 <Setter Property="HorizontalOptions" Value="End" />
@@ -36,16 +38,14 @@
                    TextColor="#999999"
                    Margin="0,10,0,0" />
 
-            <Grid ColumnDefinitions="*,*" 
-                  RowDefinitions="Auto,Auto"
-                  ColumnSpacing="12"
-                  RowSpacing="12">
-
+            <!-- FIXED: Horizontal scroll with 2x2 grid layout -->
+            <ScrollView Orientation="Horizontal" 
+                       HeightRequest="220"
+                       HorizontalScrollBarVisibility="Never">
                 <CollectionView ItemsSource="{Binding Categories}"
-                               Grid.ColumnSpan="2"
-                               Grid.RowSpan="2">
+                               HeightRequest="220">
                     <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" 
+                        <GridItemsLayout Orientation="Horizontal" 
                                        Span="2"
                                        HorizontalItemSpacing="12"
                                        VerticalItemSpacing="12" />
@@ -54,10 +54,8 @@
                         <DataTemplate>
                             <Grid Padding="16" 
                                   BackgroundColor="{Binding Color, Converter={StaticResource ColorConverter}}"
+                                  WidthRequest="160"
                                   HeightRequest="100">
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer />
-                                </Grid.GestureRecognizers>
                                 <RoundRectangle CornerRadius="12" 
                                               Fill="{Binding Color, Converter={StaticResource ColorConverter}}" />
                                 <VerticalStackLayout Spacing="8" VerticalOptions="Center">
@@ -68,17 +66,19 @@
                                     <Label Text="{Binding CategoryName}" 
                                            FontSize="16"
                                            TextColor="#333333" />
+                                    <!-- FIXED: Progress bar now spans almost full width with margins -->
                                     <BoxView HeightRequest="3" 
-                                            WidthRequest="40"
+                                            WidthRequest="{Binding Percentage, Converter={StaticResource ColorConverter}}"
                                             HorizontalOptions="Start"
-                                            Color="Red"
+                                            Margin="0,0,0,0"
+                                            Color="{Binding DarkerColor, Converter={StaticResource ColorConverter}}"
                                             IsVisible="{Binding Percentage, Converter={StaticResource ColorConverter}}" />
                                 </VerticalStackLayout>
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-            </Grid>
+            </ScrollView>
         </VerticalStackLayout>
 
         <!-- Pending Tasks Section -->
@@ -97,21 +97,24 @@
                 <DataTemplate>
                     <Grid Padding="0,8">
                         <HorizontalStackLayout Spacing="12">
-                            <CheckBox x:Name="checkBox"
+                            <CheckBox IsChecked="{Binding Completed}"
                                     CheckedChanged="checkBox_CheckedChanged"
-                                    IsChecked="{Binding Completed}"
                                     VerticalOptions="Center"
                                     Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
                             <Label Text="{Binding TaskName}" 
                                    FontSize="16"
-                                   TextColor="#333333"
-                                   VerticalOptions="Center">
+                                   VerticalOptions="Center"
+                                   TextDecorations="{Binding Completed, Converter={StaticResource ColorConverter}}">
                                 <Label.Triggers>
-                                    <DataTrigger Binding="{Binding Source={x:Reference checkBox}, Path=IsChecked}"
+                                    <DataTrigger Binding="{Binding Completed}"
                                                TargetType="Label"
                                                Value="True">
-                                        <Setter Property="TextDecorations" Value="Strikethrough" />
                                         <Setter Property="TextColor" Value="#999999" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Completed}"
+                                               TargetType="Label"
+                                               Value="False">
+                                        <Setter Property="TextColor" Value="#333333" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>

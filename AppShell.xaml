@@ -5,11 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:TaskApp"
     Shell.FlyoutBehavior="Disabled"
-    Title="TaskApp">
+    Shell.NavBarIsVisible="False">
 
     <ShellContent
-        Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Route="MainPage"
+        Shell.NavBarIsVisible="False" />
 
 </Shell>

@@ -9,6 +9,24 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Custom styles for DisplayPrompt and DisplayAlert -->
+            <Style TargetType="Page" ApplyToDerivedTypes="True">
+                <Setter Property="BackgroundColor" Value="White" />
+            </Style>
+
+            <!-- Style for Entry in prompts -->
+            <Style TargetType="Entry">
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="PlaceholderColor" Value="#999999" />
+                <Setter Property="BackgroundColor" Value="White" />
+            </Style>
+
+            <!-- Style for Labels -->
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="#333333" />
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
