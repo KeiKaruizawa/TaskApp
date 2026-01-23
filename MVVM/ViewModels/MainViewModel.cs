@@ -15,20 +15,27 @@ namespace TaskApp.MVVM.ViewModels
         public ObservableCollection<Category> Categories { get; set; }
         public ObservableCollection<MyTask> Tasks { get; set; }
 
-        private bool _isSorting = false; // Prevent infinite loop
+        // Filtered tasks that will be displayed
+        public ObservableCollection<MyTask> FilteredTasks { get; set; }
+
+        private bool _isSorting = false;
+        private bool _isUpdating = false;
 
         public MainViewModel()
         {
+            FilteredTasks = new ObservableCollection<MyTask>();
             FillData();
             Tasks.CollectionChanged += Tasks_CollectionChanged;
         }
 
         private void Tasks_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            if (_isSorting) return; // Don't sort if we're already sorting
+            if (_isSorting || _isUpdating) return;
 
-            UpdateData();
-            SortTasks(); // Sort tasks whenever collection changes (new task added)
+            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UpdateData();
+            });
         }
 
         private void FillData()
@@ -39,25 +46,29 @@ namespace TaskApp.MVVM.ViewModels
                 {
                     Id = 1,
                     CategoryName = "Assignment",
-                    Color = "#B3D9FF" // Pastel Blue
+                    Color = "#B3D9FF",
+                    IsSelected = false
                 },
                 new Category
                 {
                     Id = 2,
                     CategoryName = "Quiz",
-                    Color = "#E6D9FF" // Pastel Purple
+                    Color = "#E6D9FF",
+                    IsSelected = false
                 },
                 new Category
                 {
                     Id = 3,
                     CategoryName = "Personal",
-                    Color = "#FFD9D9" // Pastel Peach/Pink
+                    Color = "#FFD9D9",
+                    IsSelected = false
                 },
                 new Category
                 {
                     Id = 4,
                     CategoryName = "Health",
-                    Color = "#D9F2E6" // Pastel Green
+                    Color = "#D9F2E6",
+                    IsSelected = false
                 }
             };
 
@@ -114,57 +125,79 @@ namespace TaskApp.MVVM.ViewModels
             };
 
             UpdateData();
-            SortTasks(); // Initial sort
+            SortTasks();
+            ApplyFilter(); // Apply initial filter (shows all)
         }
 
         public void UpdateData()
         {
-            foreach (var c in Categories)
-            {
-                var tasks = from t in Tasks
-                            where t.CategoryId == c.Id
-                            select t;
+            if (_isUpdating) return;
 
-                var completed = from t in tasks
-                                where t.Completed == true
+            _isUpdating = true;
+
+            try
+            {
+                foreach (var c in Categories)
+                {
+                    var tasks = from t in Tasks
+                                where t.CategoryId == c.Id
                                 select t;
 
-                var notCompleted = from t in tasks
-                                   where t.Completed == false
-                                   select t;
+                    var completed = from t in tasks
+                                    where t.Completed == true
+                                    select t;
 
-                c.PendingTasks = notCompleted.Count();
+                    var notCompleted = from t in tasks
+                                       where t.Completed == false
+                                       select t;
 
-                // Fix division by zero
-                if (tasks.Count() > 0)
-                    c.Percentage = (float)completed.Count() / (float)tasks.Count();
-                else
-                    c.Percentage = 0;
+                    c.PendingTasks = notCompleted.Count();
+
+                    if (tasks.Count() > 0)
+                        c.Percentage = (float)completed.Count() / (float)tasks.Count();
+                    else
+                        c.Percentage = 0;
+                }
+
+                foreach (var t in Tasks)
+                {
+                    var catColor =
+                         (from c in Categories
+                          where c.Id == t.CategoryId
+                          select c.Color).FirstOrDefault();
+                    t.TaskColor = catColor;
+                }
             }
-
-            foreach (var t in Tasks)
+            finally
             {
-                var catColor =
-                     (from c in Categories
-                      where c.Id == t.CategoryId
-                      select c.Color).FirstOrDefault();
-                t.TaskColor = catColor;
+                _isUpdating = false;
             }
         }
 
-        // PUBLIC METHOD: Sort tasks - pending first, completed last
+        public async Task AddTaskAsync(MyTask task)
+        {
+            Tasks.Add(task);
+
+            await Task.Delay(50);
+
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                UpdateData();
+                SortTasks();
+                ApplyFilter(); // Re-apply filter after adding task
+            });
+        }
+
         public void SortTasks()
         {
-            if (_isSorting) return; // Prevent re-entrance
+            if (_isSorting) return;
 
             _isSorting = true;
 
             try
             {
-                // Sort: false (pending/not completed) comes before true (completed)
                 var sortedTasks = Tasks.OrderBy(t => t.Completed).ToList();
 
-                // Move items to their correct position
                 for (int i = 0; i < sortedTasks.Count; i++)
                 {
                     var task = sortedTasks[i];
@@ -179,6 +212,75 @@ namespace TaskApp.MVVM.ViewModels
             finally
             {
                 _isSorting = false;
+            }
+        }
+
+        // NEW: Toggle category selection and apply filter
+        public void ToggleCategorySelection(Category category)
+        {
+            category.IsSelected = !category.IsSelected;
+
+            // Defer filter update to avoid RecyclerView conflicts
+            Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+            {
+                ApplyFilter();
+            });
+        }
+
+        // NEW: Filter tasks based on selected categories
+        public void ApplyFilter()
+        {
+            // Get selected category IDs
+            var selectedCategoryIds = Categories
+                .Where(c => c.IsSelected)
+                .Select(c => c.Id)
+                .ToList();
+
+            // Determine which tasks should be visible
+            List<MyTask> tasksToShow;
+
+            // If no categories are selected, show all tasks
+            if (selectedCategoryIds.Count == 0)
+            {
+                tasksToShow = Tasks.ToList();
+            }
+            else
+            {
+                // Show only tasks from selected categories
+                tasksToShow = Tasks
+                    .Where(t => selectedCategoryIds.Contains(t.CategoryId))
+                    .ToList();
+            }
+
+            // Update FilteredTasks collection efficiently
+            // Remove tasks that shouldn't be visible
+            for (int i = FilteredTasks.Count - 1; i >= 0; i--)
+            {
+                if (!tasksToShow.Contains(FilteredTasks[i]))
+                {
+                    FilteredTasks.RemoveAt(i);
+                }
+            }
+
+            // Add tasks that should be visible but aren't in the collection yet
+            foreach (var task in tasksToShow)
+            {
+                if (!FilteredTasks.Contains(task))
+                {
+                    // Insert in correct position to maintain sort order
+                    int insertIndex = FilteredTasks.Count;
+                    for (int i = 0; i < FilteredTasks.Count; i++)
+                    {
+                        int taskIndex = Tasks.IndexOf(task);
+                        int existingIndex = Tasks.IndexOf(FilteredTasks[i]);
+                        if (taskIndex < existingIndex)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                    }
+                    FilteredTasks.Insert(insertIndex, task);
+                }
             }
         }
     }

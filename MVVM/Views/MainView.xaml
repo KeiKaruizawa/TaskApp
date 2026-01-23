@@ -32,7 +32,6 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- FIXED: Removed all top margins and padding -->
     <Grid Margin="20,50,20,0" 
           RowDefinitions="Auto,Auto,*">
 
@@ -43,7 +42,6 @@
                    TextColor="#999999"
                    Margin="0,0,0,0"/>
 
-            <!-- FIXED: Horizontal scroll with 2x2 grid layout -->
             <ScrollView Orientation="Horizontal" 
                        HeightRequest="220"
                        HorizontalScrollBarVisibility="Never">
@@ -57,10 +55,29 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
+                            <!-- UPDATED: Added TapGestureRecognizer and Scale binding -->
                             <Grid Padding="16" 
                                   BackgroundColor="{Binding Color, Converter={StaticResource ColorConverter}}"
                                   WidthRequest="160"
                                   HeightRequest="100">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="Category_Tapped" />
+                                </Grid.GestureRecognizers>
+
+                                <!-- UPDATED: Scale based on IsSelected -->
+                          <Grid.Triggers>
+                                    <DataTrigger Binding="{Binding IsSelected}"
+                                               TargetType="Grid"
+                                               Value="True">
+                                        <Setter Property="Scale" Value="1.12" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSelected}"
+                                               TargetType="Grid"
+                                               Value="False">
+                                        <Setter Property="Scale" Value="1.0" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+
                                 <RoundRectangle CornerRadius="12" 
                                               Fill="{Binding Color, Converter={StaticResource ColorConverter}}" />
                                 <VerticalStackLayout Spacing="8" VerticalOptions="Center">
@@ -71,7 +88,6 @@
                                     <Label Text="{Binding CategoryName}" 
                                            FontSize="16"
                                            TextColor="#333333" />
-                                    <!-- FIXED: Progress bar now spans almost full width with margins -->
                                     <BoxView HeightRequest="3" 
                                             WidthRequest="{Binding Percentage, Converter={StaticResource ColorConverter}}"
                                             HorizontalOptions="Start"
@@ -93,9 +109,9 @@
                    TextColor="#999999" />
         </VerticalStackLayout>
 
-        <!-- Tasks List -->
+        <!-- UPDATED: Bind to FilteredTasks instead of Tasks -->
         <CollectionView Grid.Row="2" 
-                       ItemsSource="{Binding Tasks}"
+                       ItemsSource="{Binding FilteredTasks}"
                        Margin="0,12,0,0"
                        ItemsUpdatingScrollMode="KeepLastItemInView">
             <CollectionView.ItemTemplate>
@@ -129,7 +145,7 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Add Button - MOVED LEFT -->
+        <!-- Add Button -->
         <Button Grid.Row="2"
                 Clicked="Button_Clicked"
                 Style="{StaticResource CircularButton}"
