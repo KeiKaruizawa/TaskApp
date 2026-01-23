@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls"
+             ios:Page.UseSafeArea="False"
              x:Class="TaskApp.MVVM.Views.MainView"
              xmlns:converters="clr-namespace:TaskApp.Converters"
              BackgroundColor="White"
@@ -31,7 +33,7 @@
     </ContentPage.Resources>
 
     <!-- FIXED: Removed all top margins and padding -->
-    <Grid Margin="20,0,20,0" 
+    <Grid Margin="20,50,20,0" 
           RowDefinitions="Auto,Auto,*">
 
         <!-- Categories Section -->
@@ -131,7 +133,7 @@
         <Button Grid.Row="2"
                 Clicked="Button_Clicked"
                 Style="{StaticResource CircularButton}"
-                Margin="0,0,10,25"
+                Margin="0,0,10,50"
                 Text="+" />
     </Grid>
 </ContentPage>

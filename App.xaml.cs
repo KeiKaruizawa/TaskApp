@@ -9,7 +9,7 @@ namespace TaskApp
         {
             InitializeComponent();
 
-            MainPage = new NavigationPage(new MainView());
+            MainPage = new MainView();
         }
     }
 }

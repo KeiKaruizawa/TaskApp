@@ -63,6 +63,7 @@ public partial class MainView : ContentPage
 
             if (category == null)
                 return false;
+           
         }
 
         // STEP 3: Now ask for task name (after category is chosen)
