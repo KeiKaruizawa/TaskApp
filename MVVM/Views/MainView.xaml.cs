@@ -16,33 +16,23 @@ public partial class MainView : ContentPage
     private void checkBox_CheckedChanged(object sender, CheckedChangedEventArgs e)
     {
         mainViewModel.UpdateData();
+        // IMPORTANT: Re-sort tasks when checkbox is changed
+        mainViewModel.SortTasks();
     }
 
     private async void Button_Clicked(object sender, EventArgs e)
     {
-        var result = await AddTaskWithCategory();
+        await AddTaskWithCategory();
     }
 
     private async Task<bool> AddTaskWithCategory()
     {
-        // Prompt for task name
-        string taskName = await DisplayPromptAsync(
-            "New Task",
-            "Enter task name:",
-            placeholder: "Task name",
-            maxLength: 100,
-            keyboard: Keyboard.Text);
-
-        if (string.IsNullOrWhiteSpace(taskName))
-            return false;
-
-        // Create category selection options
+        // STEP 1: Choose category first
         var categoryOptions = mainViewModel.Categories
             .Select(c => c.CategoryName)
             .ToList();
         categoryOptions.Add("➕ Add New Category");
 
-        // Prompt for category selection
         string selectedCategory = await DisplayActionSheet(
             "Choose Category",
             "Cancel",
@@ -52,34 +42,37 @@ public partial class MainView : ContentPage
         if (selectedCategory == "Cancel" || string.IsNullOrEmpty(selectedCategory))
             return false;
 
-        // If user wants to add a new category
+        Category category = null;
+
+        // STEP 2: If user wants to add a new category
         if (selectedCategory == "➕ Add New Category")
         {
-            bool categoryAdded = await AddNewCategory();
+            // FIXED: Returns the new category directly
+            category = await AddNewCategory();
 
-            if (!categoryAdded)
+            if (category == null)
                 return false;
 
-            // After adding category, ask again for category selection
-            categoryOptions = mainViewModel.Categories
-                .Select(c => c.CategoryName)
-                .ToList();
+            // No need to ask for category selection again - we already have the new category!
+        }
+        else
+        {
+            // Find the selected category
+            category = mainViewModel.Categories
+                .FirstOrDefault(c => c.CategoryName == selectedCategory);
 
-            selectedCategory = await DisplayActionSheet(
-                "Choose Category",
-                "Cancel",
-                null,
-                categoryOptions.ToArray());
-
-            if (selectedCategory == "Cancel" || string.IsNullOrEmpty(selectedCategory))
+            if (category == null)
                 return false;
         }
 
-        // Find the selected category
-        var category = mainViewModel.Categories
-            .FirstOrDefault(c => c.CategoryName == selectedCategory);
+        // STEP 3: Now ask for task name (after category is chosen)
+        string taskName = await DisplayPromptAsync(
+            "Task",
+            "Enter task name:",
+            maxLength: 100,
+            keyboard: Keyboard.Text);
 
-        if (category == null)
+        if (string.IsNullOrWhiteSpace(taskName))
             return false;
 
         // Create and add the new task
@@ -97,7 +90,7 @@ public partial class MainView : ContentPage
         return true;
     }
 
-    private async Task<bool> AddNewCategory()
+    private async Task<Category> AddNewCategory()
     {
         // Extended pastel colors that will loop (8 colors now)
         string[] pastelColors = {
@@ -112,14 +105,13 @@ public partial class MainView : ContentPage
         };
 
         string categoryName = await DisplayPromptAsync(
-            "New Category",
+            "Category",
             "Enter category name:",
-            placeholder: "Category name",
             maxLength: 50,
             keyboard: Keyboard.Text);
 
         if (string.IsNullOrWhiteSpace(categoryName))
-            return false;
+            return null;
 
         // Get the next color by cycling through the pastel colors
         int colorIndex = (mainViewModel.Categories.Count) % pastelColors.Length;
@@ -139,8 +131,8 @@ public partial class MainView : ContentPage
 
         mainViewModel.Categories.Add(newCategory);
 
-        await DisplayAlert("Success", $"Category '{categoryName}' added!", "OK");
-
-        return true;
+        // FIXED: Return the category object instead of showing success dialog
+        // Success dialog will be shown after task is added
+        return newCategory;
     }
 }

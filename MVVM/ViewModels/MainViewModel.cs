@@ -15,6 +15,8 @@ namespace TaskApp.MVVM.ViewModels
         public ObservableCollection<Category> Categories { get; set; }
         public ObservableCollection<MyTask> Tasks { get; set; }
 
+        private bool _isSorting = false; // Prevent infinite loop
+
         public MainViewModel()
         {
             FillData();
@@ -23,7 +25,10 @@ namespace TaskApp.MVVM.ViewModels
 
         private void Tasks_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
+            if (_isSorting) return; // Don't sort if we're already sorting
+
             UpdateData();
+            SortTasks(); // Sort tasks whenever collection changes (new task added)
         }
 
         private void FillData()
@@ -109,6 +114,7 @@ namespace TaskApp.MVVM.ViewModels
             };
 
             UpdateData();
+            SortTasks(); // Initial sort
         }
 
         public void UpdateData()
@@ -128,7 +134,12 @@ namespace TaskApp.MVVM.ViewModels
                                    select t;
 
                 c.PendingTasks = notCompleted.Count();
-                c.Percentage = (float)completed.Count() / (float)tasks.Count();
+
+                // Fix division by zero
+                if (tasks.Count() > 0)
+                    c.Percentage = (float)completed.Count() / (float)tasks.Count();
+                else
+                    c.Percentage = 0;
             }
 
             foreach (var t in Tasks)
@@ -138,6 +149,36 @@ namespace TaskApp.MVVM.ViewModels
                       where c.Id == t.CategoryId
                       select c.Color).FirstOrDefault();
                 t.TaskColor = catColor;
+            }
+        }
+
+        // PUBLIC METHOD: Sort tasks - pending first, completed last
+        public void SortTasks()
+        {
+            if (_isSorting) return; // Prevent re-entrance
+
+            _isSorting = true;
+
+            try
+            {
+                // Sort: false (pending/not completed) comes before true (completed)
+                var sortedTasks = Tasks.OrderBy(t => t.Completed).ToList();
+
+                // Move items to their correct position
+                for (int i = 0; i < sortedTasks.Count; i++)
+                {
+                    var task = sortedTasks[i];
+                    var currentIndex = Tasks.IndexOf(task);
+
+                    if (currentIndex != i && currentIndex >= 0)
+                    {
+                        Tasks.Move(currentIndex, i);
+                    }
+                }
+            }
+            finally
+            {
+                _isSorting = false;
             }
         }
     }

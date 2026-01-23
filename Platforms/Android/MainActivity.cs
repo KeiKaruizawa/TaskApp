@@ -2,6 +2,7 @@
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using AndroidX.AppCompat.App;
 
 namespace TaskApp
 {
@@ -13,6 +14,9 @@ namespace TaskApp
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+
+            // FORCE Light Mode for the entire app (this affects dialogs too)
+            AppCompatDelegate.DefaultNightMode = AppCompatDelegate.ModeNightNo;
 
             // IMPORTANT: Hide the ActionBar (removes black bar with "TaskApp")
             if (ActionBar != null)
@@ -26,7 +30,7 @@ namespace TaskApp
                 SupportActionBar.Hide();
             }
 
-            // Force light mode for the entire app
+            // Force light status bar
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
             {
                 Window.DecorView.SystemUiVisibility = (StatusBarVisibility)

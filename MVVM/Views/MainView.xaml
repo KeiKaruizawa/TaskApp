@@ -4,7 +4,8 @@
              x:Class="TaskApp.MVVM.Views.MainView"
              xmlns:converters="clr-namespace:TaskApp.Converters"
              BackgroundColor="White"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Padding="0">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -29,14 +30,16 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid Margin="20,10,20,0" RowDefinitions="Auto,Auto,*">
+    <!-- FIXED: Removed all top margins and padding -->
+    <Grid Margin="20,0,20,0" 
+          RowDefinitions="Auto,Auto,*">
 
         <!-- Categories Section -->
-        <VerticalStackLayout Grid.Row="0" Spacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="12" Margin="0,0,0,0">
             <Label Text="Categories" 
                    FontSize="16" 
                    TextColor="#999999"
-                   Margin="0,10,0,0" />
+                   Margin="0,0,0,0"/>
 
             <!-- FIXED: Horizontal scroll with 2x2 grid layout -->
             <ScrollView Orientation="Horizontal" 
@@ -95,7 +98,7 @@
                        ItemsUpdatingScrollMode="KeepLastItemInView">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="0,8">
+                    <Grid Padding="0,5">
                         <HorizontalStackLayout Spacing="12">
                             <CheckBox IsChecked="{Binding Completed}"
                                     CheckedChanged="checkBox_CheckedChanged"
@@ -124,10 +127,11 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Add Button -->
+        <!-- Add Button - MOVED LEFT -->
         <Button Grid.Row="2"
                 Clicked="Button_Clicked"
                 Style="{StaticResource CircularButton}"
+                Margin="0,0,10,25"
                 Text="+" />
     </Grid>
 </ContentPage>
