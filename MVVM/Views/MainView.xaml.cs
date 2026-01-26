@@ -13,12 +13,52 @@ public partial class MainView : ContentPage
         BindingContext = mainViewModel;
     }
 
-    // NEW: Handle category tap for selection/filtering
+    // Handle category tap for selection/filtering
     private void Category_Tapped(object sender, TappedEventArgs e)
     {
         if (sender is Grid grid && grid.BindingContext is Category category)
         {
             mainViewModel.ToggleCategorySelection(category);
+        }
+    }
+
+    // NEW: Handle category double-tap for editing
+    private async void Category_DoubleTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is Grid grid && grid.BindingContext is Category category)
+        {
+            string result = await DisplayPromptAsync(
+                "Edit Category",
+                "Enter new category name:",
+                initialValue: category.CategoryName,
+                maxLength: 50,
+                keyboard: Keyboard.Text,
+                placeholder: "Category name");
+
+            if (!string.IsNullOrWhiteSpace(result))
+            {
+                mainViewModel.UpdateCategoryName(category, result);
+            }
+        }
+    }
+
+    // NEW: Handle task double-tap for editing
+    private async void Task_DoubleTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is Grid grid && grid.BindingContext is MyTask task)
+        {
+            string result = await DisplayPromptAsync(
+                "Edit Task",
+                "Enter new task name:",
+                initialValue: task.TaskName,
+                maxLength: 100,
+                keyboard: Keyboard.Text,
+                placeholder: "Task name");
+
+            if (!string.IsNullOrWhiteSpace(result))
+            {
+                mainViewModel.UpdateTaskName(task, result);
+            }
         }
     }
 
@@ -65,7 +105,6 @@ public partial class MainView : ContentPage
         if (selectedCategory == "➕ Add New Category")
         {
             category = await AddNewCategory();
-
             if (category == null)
                 return false;
         }
@@ -73,7 +112,6 @@ public partial class MainView : ContentPage
         {
             category = mainViewModel.Categories
                 .FirstOrDefault(c => c.CategoryName == selectedCategory);
-
             if (category == null)
                 return false;
         }
@@ -95,7 +133,6 @@ public partial class MainView : ContentPage
         };
 
         await mainViewModel.AddTaskAsync(newTask);
-
         await DisplayAlert("Success", $"Task '{taskName}' added to {category.CategoryName}!", "OK");
 
         return true;

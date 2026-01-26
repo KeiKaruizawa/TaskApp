@@ -215,7 +215,7 @@ namespace TaskApp.MVVM.ViewModels
             }
         }
 
-        // NEW: Toggle category selection and apply filter
+        // Toggle category selection and apply filter
         public void ToggleCategorySelection(Category category)
         {
             category.IsSelected = !category.IsSelected;
@@ -227,7 +227,7 @@ namespace TaskApp.MVVM.ViewModels
             });
         }
 
-        // NEW: Filter tasks based on selected categories
+        // UPDATED: Filter tasks based on selected categories WITH SORTING
         public void ApplyFilter()
         {
             // Get selected category IDs
@@ -236,23 +236,24 @@ namespace TaskApp.MVVM.ViewModels
                 .Select(c => c.Id)
                 .ToList();
 
-            // Determine which tasks should be visible
+            // Determine which tasks should be visible (already sorted)
             List<MyTask> tasksToShow;
 
             // If no categories are selected, show all tasks
             if (selectedCategoryIds.Count == 0)
             {
-                tasksToShow = Tasks.ToList();
+                tasksToShow = Tasks.OrderBy(t => t.Completed).ToList(); // SORT HERE
             }
             else
             {
                 // Show only tasks from selected categories
                 tasksToShow = Tasks
                     .Where(t => selectedCategoryIds.Contains(t.CategoryId))
+                    .OrderBy(t => t.Completed) // SORT HERE
                     .ToList();
             }
 
-            // Update FilteredTasks collection efficiently
+            // Update FilteredTasks efficiently to avoid RecyclerView issues
             // Remove tasks that shouldn't be visible
             for (int i = FilteredTasks.Count - 1; i >= 0; i--)
             {
@@ -262,25 +263,40 @@ namespace TaskApp.MVVM.ViewModels
                 }
             }
 
-            // Add tasks that should be visible but aren't in the collection yet
-            foreach (var task in tasksToShow)
+            // Add or reorder tasks
+            for (int i = 0; i < tasksToShow.Count; i++)
             {
-                if (!FilteredTasks.Contains(task))
+                var task = tasksToShow[i];
+                var currentIndex = FilteredTasks.IndexOf(task);
+
+                if (currentIndex == -1)
                 {
-                    // Insert in correct position to maintain sort order
-                    int insertIndex = FilteredTasks.Count;
-                    for (int i = 0; i < FilteredTasks.Count; i++)
-                    {
-                        int taskIndex = Tasks.IndexOf(task);
-                        int existingIndex = Tasks.IndexOf(FilteredTasks[i]);
-                        if (taskIndex < existingIndex)
-                        {
-                            insertIndex = i;
-                            break;
-                        }
-                    }
-                    FilteredTasks.Insert(insertIndex, task);
+                    // Task not in FilteredTasks, add it at correct position
+                    FilteredTasks.Insert(i, task);
                 }
+                else if (currentIndex != i)
+                {
+                    // Task exists but in wrong position, move it
+                    FilteredTasks.Move(currentIndex, i);
+                }
+            }
+        }
+
+        // Edit category name
+        public void UpdateCategoryName(Category category, string newName)
+        {
+            if (!string.IsNullOrWhiteSpace(newName))
+            {
+                category.CategoryName = newName;
+            }
+        }
+
+        // Edit task name
+        public void UpdateTaskName(MyTask task, string newName)
+        {
+            if (!string.IsNullOrWhiteSpace(newName))
+            {
+                task.TaskName = newName;
             }
         }
     }
