@@ -15,15 +15,20 @@ namespace TaskApp.MVVM.ViewModels
         public ObservableCollection<Category> Categories { get; set; }
         public ObservableCollection<MyTask> Tasks { get; set; }
 
-        // Filtered tasks that will be displayed
-        public ObservableCollection<MyTask> FilteredTasks { get; set; }
+        // Separate collections for pending and completed tasks
+        public ObservableCollection<MyTask> PendingTasks { get; set; }
+        public ObservableCollection<MyTask> CompletedTasks { get; set; }
+
+        // Property to show/hide "Completed Tasks" label
+        public bool HasCompletedTasks => CompletedTasks?.Count > 0;
 
         private bool _isSorting = false;
         private bool _isUpdating = false;
 
         public MainViewModel()
         {
-            FilteredTasks = new ObservableCollection<MyTask>();
+            PendingTasks = new ObservableCollection<MyTask>();
+            CompletedTasks = new ObservableCollection<MyTask>();
             FillData();
             Tasks.CollectionChanged += Tasks_CollectionChanged;
         }
@@ -125,7 +130,6 @@ namespace TaskApp.MVVM.ViewModels
             };
 
             UpdateData();
-            SortTasks();
             ApplyFilter(); // Apply initial filter (shows all)
         }
 
@@ -183,36 +187,15 @@ namespace TaskApp.MVVM.ViewModels
             await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
             {
                 UpdateData();
-                SortTasks();
                 ApplyFilter(); // Re-apply filter after adding task
             });
         }
 
+        // Keep this method for backward compatibility with MainView.cs
         public void SortTasks()
         {
-            if (_isSorting) return;
-
-            _isSorting = true;
-
-            try
-            {
-                var sortedTasks = Tasks.OrderBy(t => t.Completed).ToList();
-
-                for (int i = 0; i < sortedTasks.Count; i++)
-                {
-                    var task = sortedTasks[i];
-                    var currentIndex = Tasks.IndexOf(task);
-
-                    if (currentIndex != i && currentIndex >= 0)
-                    {
-                        Tasks.Move(currentIndex, i);
-                    }
-                }
-            }
-            finally
-            {
-                _isSorting = false;
-            }
+            // Sorting is now handled in ApplyFilter(), but keeping this for compatibility
+            ApplyFilter();
         }
 
         // Toggle category selection and apply filter
@@ -227,7 +210,7 @@ namespace TaskApp.MVVM.ViewModels
             });
         }
 
-        // UPDATED: Filter tasks based on selected categories WITH SORTING
+        // UPDATED: Filter tasks and split into pending and completed
         public void ApplyFilter()
         {
             // Get selected category IDs
@@ -236,49 +219,101 @@ namespace TaskApp.MVVM.ViewModels
                 .Select(c => c.Id)
                 .ToList();
 
-            // Determine which tasks should be visible (already sorted)
+            // Determine which tasks should be visible
             List<MyTask> tasksToShow;
 
             // If no categories are selected, show all tasks
             if (selectedCategoryIds.Count == 0)
             {
-                tasksToShow = Tasks.OrderBy(t => t.Completed).ToList(); // SORT HERE
+                tasksToShow = Tasks.ToList();
             }
             else
             {
                 // Show only tasks from selected categories
                 tasksToShow = Tasks
                     .Where(t => selectedCategoryIds.Contains(t.CategoryId))
-                    .OrderBy(t => t.Completed) // SORT HERE
                     .ToList();
             }
 
-            // Update FilteredTasks efficiently to avoid RecyclerView issues
+            // Split into pending and completed
+            var pendingList = tasksToShow.Where(t => !t.Completed).ToList();
+            var completedList = tasksToShow.Where(t => t.Completed).ToList();
+
+            // Update PendingTasks
+            UpdateCollection(PendingTasks, pendingList);
+
+            // Update CompletedTasks
+            UpdateCollection(CompletedTasks, completedList);
+        }
+
+        // Helper method to efficiently update an ObservableCollection
+        private void UpdateCollection(ObservableCollection<MyTask> collection, List<MyTask> newItems)
+        {
             // Remove tasks that shouldn't be visible
-            for (int i = FilteredTasks.Count - 1; i >= 0; i--)
+            for (int i = collection.Count - 1; i >= 0; i--)
             {
-                if (!tasksToShow.Contains(FilteredTasks[i]))
+                if (!newItems.Contains(collection[i]))
                 {
-                    FilteredTasks.RemoveAt(i);
+                    collection.RemoveAt(i);
                 }
             }
 
             // Add or reorder tasks
-            for (int i = 0; i < tasksToShow.Count; i++)
+            for (int i = 0; i < newItems.Count; i++)
             {
-                var task = tasksToShow[i];
-                var currentIndex = FilteredTasks.IndexOf(task);
+                var task = newItems[i];
+                var currentIndex = collection.IndexOf(task);
 
                 if (currentIndex == -1)
                 {
-                    // Task not in FilteredTasks, add it at correct position
-                    FilteredTasks.Insert(i, task);
+                    // Task not in collection, add it at correct position
+                    collection.Insert(i, task);
                 }
                 else if (currentIndex != i)
                 {
                     // Task exists but in wrong position, move it
-                    FilteredTasks.Move(currentIndex, i);
+                    collection.Move(currentIndex, i);
                 }
+            }
+        }
+
+        // NEW: Delete a task
+        public void DeleteTask(MyTask task)
+        {
+            if (task != null && Tasks.Contains(task))
+            {
+                Tasks.Remove(task);
+
+                // Update UI
+                Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    UpdateData();
+                    ApplyFilter();
+                });
+            }
+        }
+
+        // NEW: Delete a category and all its tasks
+        public void DeleteCategory(Category category)
+        {
+            if (category != null && Categories.Contains(category))
+            {
+                // First, remove all tasks in this category
+                var tasksToRemove = Tasks.Where(t => t.CategoryId == category.Id).ToList();
+                foreach (var task in tasksToRemove)
+                {
+                    Tasks.Remove(task);
+                }
+
+                // Then remove the category
+                Categories.Remove(category);
+
+                // Update UI
+                Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    UpdateData();
+                    ApplyFilter();
+                });
             }
         }
 

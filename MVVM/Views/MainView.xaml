@@ -55,15 +55,22 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <!-- UPDATED: Added DoubleTapped gesture for editing -->
+                            <!-- UPDATED: Added gestures for single tap, double tap, and long press -->
                             <Grid Padding="16" 
                                   BackgroundColor="{Binding Color, Converter={StaticResource ColorConverter}}"
                                   WidthRequest="160"
-                                  HeightRequest="100">
+                                  HeightRequest="100"
+                                  x:Name="CategoryGrid">
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="Category_Tapped" />
                                     <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="Category_DoubleTapped" />
                                 </Grid.GestureRecognizers>
+
+                                <!-- Invisible button overlay for long press detection -->
+                                <Button BackgroundColor="Transparent"
+                                        Pressed="Category_Pressed"
+                                        Released="Category_Released"
+                                        Clicked="Category_ClickedEmpty" />
 
                                 <!-- Scale based on IsSelected -->
                                 <Grid.Triggers>
@@ -103,59 +110,114 @@
             </ScrollView>
         </VerticalStackLayout>
 
-        <!-- Pending Tasks Section -->
-        <VerticalStackLayout Grid.Row="1" Spacing="12" Margin="0,30,0,0">
-            <Label Text="Pending Tasks" 
-                   FontSize="16" 
-                   TextColor="#999999" />
-        </VerticalStackLayout>
+        <!-- Pending Tasks Label -->
+        <Label Grid.Row="1"
+               Text="Pending Tasks" 
+               FontSize="16" 
+               TextColor="#999999"
+               Margin="0,30,0,12" />
 
-        <!-- UPDATED: Tasks with double-tap to edit -->
-        <CollectionView Grid.Row="2" 
-                       ItemsSource="{Binding FilteredTasks}"
-                       Margin="0,12,0,0"
-                       ItemsUpdatingScrollMode="KeepLastItemInView">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Padding="0,5">
-                        <Grid.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="Task_DoubleTapped" />
-                        </Grid.GestureRecognizers>
+        <!-- FIXED: ScrollView wrapper for tasks with proper padding at bottom -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Spacing="0" Padding="0,0,0,80">
 
-                        <HorizontalStackLayout Spacing="12">
-                            <CheckBox IsChecked="{Binding Completed}"
-                                    CheckedChanged="checkBox_CheckedChanged"
-                                    VerticalOptions="Center"
-                                    Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
-                            <Label Text="{Binding TaskName}" 
-                                   FontSize="16"
-                                   VerticalOptions="Center"
-                                   HorizontalOptions="FillAndExpand"
-                                   TextDecorations="{Binding Completed, Converter={StaticResource ColorConverter}}">
-                                <Label.Triggers>
-                                    <DataTrigger Binding="{Binding Completed}"
-                                               TargetType="Label"
-                                               Value="True">
-                                        <Setter Property="TextColor" Value="#999999" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Completed}"
-                                               TargetType="Label"
-                                               Value="False">
-                                        <Setter Property="TextColor" Value="#333333" />
-                                    </DataTrigger>
-                                </Label.Triggers>
-                            </Label>
-                        </HorizontalStackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                <!-- Pending Tasks Collection with SWIPE TO DELETE -->
+                <CollectionView ItemsSource="{Binding PendingTasks}"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <!-- SwipeView for delete functionality -->
+                            <SwipeView>
+                                <!-- Right swipe actions (Delete) -->
+                                <SwipeView.RightItems>
+                                    <SwipeItems Mode="Execute">
+                                        <SwipeItem Text="Delete"
+                                                  BackgroundColor="#FF3B30"
+                                                  IconImageSource="trash.png"
+                                                  Invoked="Task_SwipeDelete" />
+                                    </SwipeItems>
+                                </SwipeView.RightItems>
 
-        <!-- Add Button -->
+                                <!-- Task Content -->
+                                <Grid Padding="0,5" BackgroundColor="White">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="Task_DoubleTapped" />
+                                    </Grid.GestureRecognizers>
+
+                                    <HorizontalStackLayout Spacing="12">
+                                        <CheckBox IsChecked="{Binding Completed}"
+                                                CheckedChanged="checkBox_CheckedChanged"
+                                                VerticalOptions="Center"
+                                                Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
+                                        <Label Text="{Binding TaskName}" 
+                                               FontSize="16"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="FillAndExpand"
+                                               TextColor="#333333" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </SwipeView>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Completed Tasks Label -->
+                <Label Text="Completed Tasks" 
+                       FontSize="16" 
+                       TextColor="#999999"
+                       Margin="0,24,0,12"
+                       IsVisible="{Binding HasCompletedTasks}" />
+
+                <!-- Completed Tasks Collection with SWIPE TO DELETE -->
+                <CollectionView ItemsSource="{Binding CompletedTasks}"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <!-- SwipeView for delete functionality -->
+                            <SwipeView>
+                                <!-- Right swipe actions (Delete) -->
+                                <SwipeView.RightItems>
+                                    <SwipeItems Mode="Execute">
+                                        <SwipeItem Text="Delete"
+                                                  BackgroundColor="#FF3B30"
+                                                  IconImageSource="trash.png"
+                                                  Invoked="Task_SwipeDelete" />
+                                    </SwipeItems>
+                                </SwipeView.RightItems>
+
+                                <!-- Task Content -->
+                                <Grid Padding="0,5" BackgroundColor="White">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="Task_DoubleTapped" />
+                                    </Grid.GestureRecognizers>
+
+                                    <HorizontalStackLayout Spacing="12">
+                                        <CheckBox IsChecked="{Binding Completed}"
+                                                CheckedChanged="checkBox_CheckedChanged"
+                                                VerticalOptions="Center"
+                                                Color="{Binding TaskColor, Converter={StaticResource ColorConverter}}" />
+                                        <Label Text="{Binding TaskName}" 
+                                               FontSize="16"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="FillAndExpand"
+                                               TextDecorations="Strikethrough"
+                                               TextColor="#999999" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </SwipeView>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Add Button - in separate Grid to avoid blocking scrolling -->
         <Button Grid.Row="2"
                 Clicked="Button_Clicked"
                 Style="{StaticResource CircularButton}"
                 Margin="0,0,10,50"
+                InputTransparent="False"
                 Text="+" />
     </Grid>
 </ContentPage>
